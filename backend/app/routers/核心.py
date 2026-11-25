@@ -1,9 +1,19 @@
 import json
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Body, HTTPException
 from pydantic import BaseModel, Field
 
 from app.db import 夹具目录, 连接
 from app.services import 回放, 抽取, 目录, 装载
+from app.modules.三日连环守恒 import (
+    架构口径 as 链架构口径,
+    归档链批,
+    删除链批,
+    列链批,
+    列证明,
+    核证链,
+    跑三日链,
+)
+from app.modules.断档补齐 import 补齐缺日
 
 路由 = APIRouter(prefix="/api")
 
@@ -214,12 +224,185 @@ def 执行回放(体: 营业日请求):
         raise HTTPException(400, str(e)) from e
 
 
+# ===========================================================================
+# 三日连环守恒 · 链证明 / 核证 / 链式批归档删除（口径 A：独立守恒证明表为准）
+# ===========================================================================
+
+def _取(d: dict, *keys, default=None):
+    for k in keys:
+        if k in d and d[k] not in (None, ""):
+            return d[k]
+    return default
+
+
+def _解析跑链体(体: dict) -> dict:
+    账户 = _取(体, "账户键们", "账户们", "账户键", "账户", "accounts", default=None)
+    if isinstance(账户, str):
+        账户 = [x.strip() for x in 账户.split(",") if x.strip()]
+    日子 = _取(体, "营业日们", "日期们", "三日", "营业日", "days", default=None)
+    if isinstance(日子, str):
+        日子 = [x.strip() for x in 日子.split(",") if x.strip()]
+    return {
+        "账户键们": 账户,
+        "营业日们": 日子,
+        "末日": str(_取(体, "末日", "end", default="") or ""),
+        "链号": str(_取(体, "链号", "chain_id", default="") or ""),
+        "批次编号": str(_取(体, "批次编号", "ticket", default="") or ""),
+    }
+
+
+@路由.get("/连环守恒")
+def 连环守恒索引():
+    return {
+        "项目": "三日连环守恒",
+        "架构口径": 链架构口径,
+        "禁止只返回布尔": True,
+        "接口": {
+            "跑链物化证明": "POST /api/连环守恒/跑链",
+            "核证(路径链号)": "GET /api/连环守恒/核证/{链号}",
+            "核证(查询链号)": "GET /api/连环守恒/核证?链号=...",
+            "证明列表": "GET /api/连环守恒/证明",
+            "链批列表": "GET /api/连环守恒/链批",
+            "删链批(证明仍可读)": "DELETE /api/连环守恒/链批/{链号}",
+            "归档链批": "POST /api/连环守恒/链批/{链号}/归档",
+            "断档补齐": "POST /api/断档补齐",
+        },
+        "最近证明": 列证明(5),
+    }
+
+
+@路由.post("/连环守恒/跑链")
+def 连环跑链(体: dict = Body(default_factory=dict)):
+    try:
+        return 跑三日链(**_解析跑链体(体 or {}))
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@路由.get("/连环守恒/证明")
+def 连环证明列表():
+    return 列证明(200)
+
+
+@路由.get("/连环守恒/核证")
+def 连环核证查询(链号: str = "", chain_id: str = ""):
+    key = 链号 or chain_id
+    if not key:
+        raise HTTPException(400, "核证须提供链号")
+    return 核证链(key)
+
+
+@路由.post("/连环守恒/核证")
+def 连环核证POST(体: dict = Body(default_factory=dict)):
+    key = str(_取(体 or {}, "链号", "chain_id", default="") or "")
+    if not key:
+        raise HTTPException(400, "核证须提供链号")
+    return 核证链(key)
+
+
+@路由.get("/连环守恒/核证/{chain_id}")
+def 连环核证路径(chain_id: str):
+    # 注意：Starlette 路径占位符只认 ASCII 参数名，故路径用 chain_id；
+    # 响应体里仍回中文『链号』。
+    return 核证链(chain_id)
+
+
+@路由.get("/连环守恒/证明/{chain_id}")
+def 连环证明详情(chain_id: str):
+    return 核证链(chain_id)
+
+
+@路由.get("/连环守恒/链批")
+def 连环链批列表():
+    return 列链批(200)
+
+
+@路由.get("/连环守恒/链批/{chain_id}")
+def 连环链批详情(chain_id: str):
+    rows = [b for b in 列链批(500) if b.get("链号") == chain_id]
+    return {"链号": chain_id, "链批": rows[0] if rows else None, "核证": 核证链(chain_id)}
+
+
+@路由.delete("/连环守恒/链批/{chain_id}")
+def 连环删链批(chain_id: str):
+    return 删除链批(chain_id)
+
+
+@路由.post("/连环守恒/链批/{chain_id}/删除")
+def 连环删链批POST(chain_id: str):
+    return 删除链批(chain_id)
+
+
+@路由.post("/连环守恒/删批")
+def 连环删批体(体: dict = Body(default_factory=dict)):
+    key = str(_取(体 or {}, "链号", "chain_id", default="") or "")
+    if not key:
+        raise HTTPException(400, "须提供链号")
+    return 删除链批(key)
+
+
+@路由.post("/连环守恒/链批/{chain_id}/归档")
+def 连环归档链批(chain_id: str):
+    return 归档链批(chain_id)
+
+
+class 补齐请求(BaseModel):
+    营业日: str
+    账户键: str = ""
+    批次编号: str = ""
+
+
+@路由.post("/断档补齐")
+def 执行断档补齐(体: 补齐请求):
+    try:
+        return 补齐缺日(体.营业日, 体.账户键, 体.批次编号)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+# --- 路径别名：兼容『三日连环守恒/三日连环/连环』等不同命名习惯 -------------
+for _p in ("/三日连环守恒/跑链", "/三日连环/跑链", "/连环/跑链", "/三日连环守恒"):
+    路由.add_api_route(_p, 连环跑链, methods=["POST"])
+for _p in (
+    "/三日连环守恒/核证/{chain_id}",
+    "/三日连环守恒/证明/{chain_id}",
+    "/三日连环/核证/{chain_id}",
+    "/连环/核证/{chain_id}",
+    "/连环守恒核证/{chain_id}",
+    "/链证明/{chain_id}",
+    "/守恒证明/{chain_id}",
+):
+    路由.add_api_route(_p, 连环核证路径, methods=["GET"])
+for _p in ("/链证明", "/守恒证明"):
+    路由.add_api_route(_p, 连环证明列表, methods=["GET"])
+for _p in ("/三日连环守恒/证明", "/三日连环/证明"):
+    路由.add_api_route(_p, 连环证明列表, methods=["GET"])
+for _p in ("/三日连环守恒/链批",):
+    路由.add_api_route(_p, 连环链批列表, methods=["GET"])
+for _p in ("/三日连环守恒/链批/{chain_id}", "/连环/链批/{chain_id}"):
+    路由.add_api_route(_p, 连环删链批, methods=["DELETE"])
+
+
+@路由.get("/连环守恒核证")
+def 连环核证扁平(链号: str = "", chain_id: str = ""):
+    key = 链号 or chain_id
+    if not key:
+        raise HTTPException(400, "核证须提供链号")
+    return 核证链(key)
+
+
 @路由.post("/重置业务库")
 def 重置():
     """开发冒烟用：清业务表并保留账户与台参。"""
     conn = 连接()
     try:
+        # 老库/未触发生命周期时也保证链表存在，避免 DELETE 缺表 500
+        from app.modules.三日连环守恒 import 确保链表
+
+        确保链表(conn)
         for t in (
+            "守恒证明",
+            "链式批",
             "变动流水",
             "抽取批次",
             "周期快照",

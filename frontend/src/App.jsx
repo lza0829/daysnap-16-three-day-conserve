@@ -6,6 +6,7 @@ import 变动流水 from "./pages/变动流水.jsx";
 import 日终抽取 from "./pages/日终抽取.jsx";
 import 周期快照 from "./pages/周期快照.jsx";
 import 回放核对 from "./pages/回放核对.jsx";
+import 连环守恒 from "./pages/连环守恒.jsx";
 import 差额清单 from "./pages/差额清单.jsx";
 import 断档跳变 from "./pages/断档跳变.jsx";
 import 旁置簿 from "./pages/旁置簿.jsx";
@@ -18,6 +19,7 @@ const 主链 = [
   ["/日终抽取", "③ 日终抽取"],
   ["/周期快照", "④ 周期快照"],
   ["/回放核对", "⑤ 回放核对"],
+  ["/连环守恒", "⑥ 三日连环链证"],
   ["/差额清单", "差额清单"],
 ];
 const 次链 = [
@@ -55,6 +57,7 @@ export default function App() {
           <Route path="/日终抽取" element={<日终抽取 />} />
           <Route path="/周期快照" element={<周期快照 />} />
           <Route path="/回放核对" element={<回放核对 />} />
+          <Route path="/连环守恒" element={<连环守恒 />} />
           <Route path="/差额清单" element={<差额清单 />} />
           <Route path="/断档跳变" element={<断档跳变 />} />
           <Route path="/旁置簿" element={<旁置簿 />} />

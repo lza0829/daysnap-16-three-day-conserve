@@ -36,4 +36,18 @@ export const api = {
   抽取: (营业日) => 请求("/抽取", { method: "POST", body: JSON.stringify({ 营业日 }) }),
   回放: (营业日) => 请求("/回放", { method: "POST", body: JSON.stringify({ 营业日 }) }),
   重置: () => 请求("/重置业务库", { method: "POST", body: "{}" }),
+
+  // 三日连环守恒 · 链证明（口径 A：独立证明表，删链式批后仍可按链号核证）
+  跑连环链: (body) =>
+    请求("/连环守恒/跑链", { method: "POST", body: JSON.stringify(body || {}) }),
+  核证连环: (链号) =>
+    请求(`/连环守恒/核证/${encodeURIComponent(链号)}`),
+  连环证明列表: () => 请求("/连环守恒/证明"),
+  连环链批列表: () => 请求("/连环守恒/链批"),
+  删连环链批: (链号) =>
+    请求(`/连环守恒/链批/${encodeURIComponent(链号)}`, { method: "DELETE" }),
+  归档连环链批: (链号) =>
+    请求(`/连环守恒/链批/${encodeURIComponent(链号)}/归档`, { method: "POST" }),
+  断档补齐: (body) =>
+    请求("/断档补齐", { method: "POST", body: JSON.stringify(body) }),
 };

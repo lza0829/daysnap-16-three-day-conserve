@@ -154,6 +154,37 @@ th { color: var(--淡); font-weight: 600; background: var(--块深) }
 .徽章.败 { background: var(--败底); color: var(--败) }
 .段 { margin-top: 1.25rem }
 .段题 { font-size: 0.9rem; margin: 0 0 0.55rem; color: var(--水); font-weight: 700 }
+
+/* 三日连环链证明 */
+.勾选 { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.88rem; background: var(--块); border: 1px solid var(--线); border-radius: 999px; padding: 0.28rem 0.7rem; cursor: pointer }
+.勾选 input { padding: 0; margin: 0 }
+.链号输入 { min-width: 320px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.82rem }
+.链号 { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.82rem; color: var(--水); user-select: all; word-break: break-all }
+.链号链接 { font-size: 0.85rem; color: var(--淡); text-decoration: none }
+.链号链接:hover { color: var(--水) }
+.链查条 { display: flex; gap: 0.55rem; align-items: center; flex-wrap: wrap; margin: 0.4rem 0 0.8rem }
+.淡 { color: var(--淡); font-size: 0.86rem }
+.淡注 { color: var(--淡); font-size: 0.76rem; margin-top: 0.15rem }
+.证卡 { background: var(--块); border: 1px solid var(--线); border-left: 4px solid var(--水); border-radius: 10px; padding: 0.9rem 1rem; margin: 0.6rem 0 1rem; box-shadow: 0 8px 18px rgba(21,32,51,0.05) }
+.证卡.紧 { padding: 0.65rem 0.85rem }
+.证头 { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; align-items: flex-start }
+.证次 { margin-top: 0.4rem; font-size: 0.88rem; display: flex; align-items: center; flex-wrap: wrap; gap: 2px }
+.证meta { color: var(--淡); font-size: 0.76rem; text-align: right; line-height: 1.6 }
+.败因 { color: var(--败); font-size: 0.82rem; margin: 0.35rem 0; line-height: 1.5 }
+.小阶 { display: inline-block; background: var(--块深); border-radius: 999px; padding: 0.14rem 0.6rem; font-size: 0.76rem; font-weight: 600 }
+.小阶.通 { background: var(--通底); color: var(--通) }
+.小阶.败 { background: var(--败底); color: var(--败) }
+.指纹行 { display: flex; gap: 0.45rem; align-items: baseline; margin-top: 0.45rem; font-size: 0.78rem; color: var(--淡) }
+.指纹行 code { word-break: break-all; background: var(--块深); border-radius: 6px; padding: 0.12rem 0.4rem; color: var(--字) }
+.短指纹 { font-size: 0.76rem }
+.数通 { color: var(--通); font-variant-numeric: tabular-nums }
+.数败 { color: var(--败); font-weight: 700; font-variant-numeric: tabular-nums }
+tr.可点 { cursor: pointer }
+tr.可点:hover { background: rgba(29,111,138,0.06) }
+button.小钮 { padding: 0.2rem 0.6rem; font-size: 0.76rem }
+button.危 { background: transparent; border: 1px solid #e0b4b4; color: var(--败); font-weight: 600 }
+button.危:hover { background: var(--败底) }
+
 @media (max-width: 860px) {
   .壳 { grid-template-columns: 1fr }
   .轨 { position: relative; height: auto }

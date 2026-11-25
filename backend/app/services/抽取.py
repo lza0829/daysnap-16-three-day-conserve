@@ -4,6 +4,7 @@ from typing import Any
 
 from app.db import 连接
 from app.services.时间 import 此刻, 标准化营业日
+from app.modules.三日连环守恒 import 推进源纪元
 
 
 def _台参(conn) -> dict[str, str]:
@@ -107,6 +108,9 @@ def 日终抽取(营业日: str, 批次编号: str = "") -> dict[str, Any]:
             "INSERT INTO 抽取批次(编号, 营业日, 时刻, 报告) VALUES (?,?,?,?)",
             (批, 日, 此刻(), json.dumps(报告, ensure_ascii=False)),
         )
+        # 任何抽取（含中日重抽、断档补齐触发的抽取）都推进源纪元，
+        # 使三日链证明指纹感知源变动，杜绝过期指纹假通过。
+        推进源纪元(conn)
         conn.commit()
         return {"批次编号": 批, **报告}
     finally:

@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from app.db import 连接
+from app.modules.三日连环守恒 import 链表DDL, 确保链表
 
 建表 = """
 CREATE TABLE IF NOT EXISTS 台参 (
@@ -101,7 +102,6 @@ CREATE TABLE IF NOT EXISTS 装载批次 (
     "半截抽取回滚",
     "快照封印写闸",
     "回放权威择定",
-    "断档补齐",
     "断档旁置",
     "跳变阈值",
     "账户分片抽取",
@@ -111,7 +111,6 @@ CREATE TABLE IF NOT EXISTS 装载批次 (
     "子户汇总镜",
     "假期跳日日历",
     "差额分桶",
-    "三日连环守恒",
     "抽取重试预算",
     "跨日切点策略",
 ]
@@ -124,6 +123,8 @@ def 此刻() -> str:
 def 初始化库() -> None:
     conn = 连接()
     conn.executescript(建表)
+    # 三日连环守恒：独立证明表 + 链式批表 + 同义视图（口径 A）
+    确保链表(conn)
     if conn.execute("SELECT COUNT(*) AS c FROM 台参").fetchone()["c"] == 0:
         for k, v in {
             "站名": "日镜账",
